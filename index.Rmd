@@ -62,7 +62,7 @@ The happiness scores and rankings use data from the Gallup World Poll . The colu
 **Important steps-**
 
 - To check my RPubs out click [here](https://rpubs.com/FarzanaPatel/psy6422_HappinessReport2021)
-- To check my github website click [here](add link)
+- To check my github website click [here](https://farz1313.github.io/farzana_patel_psy6422/)
 - To check my GitHub repository out please click [here](https://github.com/farz1313/farzana_patel_psy6422) 
 
   * Clone my git repository  
