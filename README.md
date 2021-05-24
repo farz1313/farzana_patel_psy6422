@@ -10,4 +10,7 @@ farzana_patel_psy6422 = contains the below folders and .gitignore (hidden), Rhis
 data = 2 csv files downloaded from kaggle<br>
 fig = contains plots I created during the project <br>
 renv = contains my renv files<br>
-wrap-up self-assessment = contains my wrap-up self-assessment .rmd and pdf file.
+wrap-up self-assessment = contains my wrap-up self-assessment .rmd and pdf file.<br>
+<br>
+Github page: https://farz1313.github.io/farzana_patel_psy6422/      <br>
+RPubs site: https://rpubs.com/FarzanaPatel/psy6422_HappinessReport2021   
