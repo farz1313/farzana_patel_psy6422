@@ -1,0 +1,582 @@
+---
+title: "The World Happiness Report 2021"
+author: "Farzana Patel"
+date: "16/05/2021"
+output:
+  html_document:
+    toc_float: true
+    theme: default
+    toc: true
+    code_download: true
+    highlight: tango 
+    code_folding: show 
+    df_print: paged
+    fig_caption: true
+    number_sections: true 
+  xaringan::moon_reader:
+    css: [default, metropolis, metropolis-fonts]
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+  pdf_document: 
+    fig_caption: true
+    
+  
+---
+
+## Project Motivation
+
+Being a nerdy kaggler, it was no brainer to pick 1 out of 54k+ public datasets. Totally didn't have paradox of choice/existential crisis. It lead me to find something completely opposite to what I was feeling; a dataset of happiness levels around the globe.  
+The World Happiness Report 2021 focuses on the effects of COVID-19 and how people all over the world have fared. The reports review the state of happiness in the world today and show how the new science of happiness explains personal and national variations in happiness.  
+That's how I decided to check out the pursuit of happi(y)ness.
+
+### Content
+The happiness scores and rankings use data from the Gallup World Poll . The columns following the happiness score estimate the extent to which each of six factors – economic production, social support, life expectancy, freedom, absence of corruption, and generosity – contribute to making life evaluations higher in each country than they are in Dystopia, a hypothetical country that has values equal to the world’s lowest national averages for each of the six factors. 
+
+### Data Source
+- For this analysis, the scope is just limited to the World Happiness 2021 and World Happiness (2005-2020) dataset. 
+- The [Happiness 2021 dataset](https://www.kaggle.com/ajaypalsinghlo/world-happiness-report-2021) was sourced from [Kaggle](https://www.kaggle.com).
+
+- Due to the sheer volume of data, the analysis focused specifically on 10 variables.The table below provides a description of the variables used  during the analysis
+
+- **Data Dictionary**
+
+| Variable | Datatype | Explaination 
+|------:|:-----|---------|:------
+| country_name | character | Country name (141 countries)
+| year | integer | Year | 
+| ladder_score | numeric | Life evaluation score 
+| regional_indicator | numeric | Region (10 Regions)  
+| logged_GDP_per_capita| numeric | Extent to which GDP contributes to the calculation of the Ladder score   
+| healthy_life_expectancy| numeric |  Healthy life expectancies at birth based on the data extracted from the World Health Organisation (WHO) data repository   
+| social_support| numeric | Defined as having someone to count on in times of trouble (ranked from 0 to 1)  
+| freedom_to_make_life_choices| numeric | Defined as the national average of responses to the Gall-WorldPoll question (“Are you satisfied or dissatisfied with your freedom to choose what you do with your life?”)   
+| generosity| numeric | National average of responses to the question - “Have you donated money to a charity in the past month?”  
+| perception_of_corruption| numeric | National average of responses to the questions (“Is corruption widespread throughout the government or not” and “Is corruption widespread within businesses or not?” ) 
+
+- Details on the metadata of the dataset is provided under the References section.
+
+
+***
+
+**Important steps-**
+
+- To check my RPubs out click [here](https://rpubs.com/FarzanaPatel/psy6422_HappinessReport2021)
+- To check my github website click [here](add link)
+- To check my GitHub repository out please click [here](https://github.com/farz1313/farzana_patel_psy6422) 
+
+  * Clone my git repository  
+  * Open index.Rmd  
+  * Enter renv::restore()  
+  * Enter y  
+
+***
+
+## Research Questions
+- **What is the effect of Covid19 on happiness levels in 2020 and 2021?**
+   - What are the top 10 happiest and saddest countries in 2021?
+   - What is general trend of happiness in the world over last 3 years?
+   - What factors contributed most to happiness scores?
+   - Which regions showed change in happiness levels?
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = 'left', echo = TRUE, warning = FALSE, fig.height=8, fig.width=10)
+options(knitr.duplicate.label = "allow")
+```
+***
+## Data Preperation
+### Importing libraries and datasets
+
+```{r data, include = TRUE, echo=TRUE, message=FALSE, results='hide'}
+packages = c('tidyverse', # for easy handling of data
+'heatmaply', # for visualizing data around plotly
+'visdat', # for exploring missing data structure
+'ggplot2', # for data visualization
+'naniar', # for plotting missing values
+'dplyr', # for data manipulation
+'tidyr', # to create tidy data
+'hrbrthemes', # to include additional themes for ggplot2
+'ggchicklet', #stylize charts
+'ggalt', # for statistical transformation
+'corrplot', # for correlogram
+'plotly', # for interactive and publication quality graphs
+'cowplot', #add-on to ggplot
+'patchwork', # to create layouts in ggplot
+'RColorBrewer', # for ready to use color palettes
+'ggbeeswarm', # to plot scatterplots
+'scales', # for internal scaling
+'kableExtra' # to build tables
+)
+for (p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+
+#Reading the data
+df_2021 <- read.csv("data/world-happiness-report-2021.csv")
+df_all <- read.csv("data/world-happiness-report.csv")
+
+```
+
+***
+
+## Exploratory Data Analysis and cleaning {.tabset .tabset-fade .tabset-pills }
+### Full dataset (2005-2020)
+Displaying dataset from 2005 t0 2020
+```{r}
+df1<-head(df_all)
+kable(df1) %>%
+kable_styling(bootstrap_options = "condensed", font_size= 8, full_width = F)
+```
+### Dataset 2021
+Displaying dataset 2021
+```{r}
+df2<-head(df_2021)
+kable(df2) %>%
+kable_styling(bootstrap_options = "condensed", font_size= 8, full_width = F)
+```
+
+### Exploring data
+Visualizing datasets to check datatypes.
+```{r, fig.height = 4, fig.width = 10, fig.cap="Figure 1: Plots showing datatypes"} 
+vis_data_1 <- vis_dat(df_2021)+ labs(x = "Datatypes for 2021 dataset")
+vis_data_2 <- vis_dat(df_all)+ labs(x = "Datatypes for all dataset")
+vis_data_1 + vis_data_2
+```
+
+>Both datasets show numeric and character datatypes with few NA values. 
+
+### Checking for missing values
+Plotting missing values of both datasets.
+```{r, fig.height = 3, fig.width = 11, fig.cap="Figure 2: Plots of missing values"} 
+miss_data_1 <- gg_miss_var(df_2021) + labs(y = "Checking for the missing ones in 2021")
+miss_data_2 <- gg_miss_var(df_all) + labs(y = "Checking for the missing ones in full_data")
+miss_data_1 + miss_data_2
+```
+
+>`df_2021` has no missing values whereas `df_all` has some columns with missing values.
+
+### Treating `NA` values
+Imputing missing values with mean of the columns
+```{r, results='hide'}
+df_all[sapply(df_all, is.numeric)] <- lapply(df_all[sapply(df_all, is.numeric)], function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x))  
+df_all %>% summarise(across(everything(), ~ sum(is.na(.))))
+```
+
+### Cleaned dataset
+Checking for `NA` values in dataset.
+```{r,fig.height = 2, fig.width = 5, fig.cap="Figure 3: Plot of NA for cleaned dataset"}
+gg_miss_var(df_all) + labs(y = "Checking for the missing ones in full_data")
+```
+
+> Dataset has no missing values after treatment.
+
+### Summary of full dataset
+```{r, cols.print=4, rows.print=5}
+summary(df_all)
+```
+
+### Summary of full dataset
+```{r, cols.print=4, rows.print=5}
+summary(df_2021)
+```
+
+***
+
+
+## Visualization 1 -Top 10 happiest and saddest countries in 2021
+
+### Getting top and bottom 10 countries.
+Mapping countries by region and filtering countries by `ladder_score` i.e. happiness level.
+```{r}
+# Subsetting dimensions
+dimensions <- c('ladder_score',
+                'logged_GDP_per_capita',
+                'social_support',
+                'healthy_life_expectancy',
+                'freedom_to_make_life_choices',
+                'generosity',
+                'perceptions_of_corruption')
+
+# Mapping country to regions
+country_region_dict = df_2021 %>% 
+  select(country = ï..country_name, region = regional_indicator) %>% unique()
+
+df_2021_long <- df_2021 %>% 
+  select(country = ï..country_name, all_of(dimensions)) %>%
+  mutate(absence_of_corruption = 1- perceptions_of_corruption) %>%
+  pivot_longer(cols = c(all_of(dimensions),'absence_of_corruption'),
+               names_to = 'dimension', values_to = 'score') %>%
+  filter(dimension != "perceptions_of_corruption")
+
+# Calculating score using min max values
+df_2021_tranformed <- df_2021_long %>%
+  group_by(dimension) %>%
+  mutate(min_value = min(score),
+         max_value = max(score)) %>%
+  mutate(score_pct = (score-min_value)/(max_value-min_value)) %>%
+  ungroup()
+
+# Getting top 10 countries
+df_2021_top10 <- df_2021_tranformed %>%
+  filter(dimension == "ladder_score") %>%
+  slice_max(score, n = 10) %>%
+  mutate(cat = 'top_10', 
+         country_rank = rank(-score),
+         country_label = paste0(country, ' (', country_rank, ')'))
+
+# Getting bottom 10 countries
+df_2021_bottom10 <- df_2021_tranformed %>%
+  filter(dimension == "ladder_score") %>%
+  mutate(country_rank = rank(score),
+         country_label = paste0(country, ' (', country_rank, ')')) %>%
+  slice_min(score, n = 10) %>%
+  mutate(cat = 'bottom_10')
+
+```
+### Plotting top and bottom 10 countries
+```{r, fig.height = 4, fig.width = 10, fig.cap="Figure 4: Plot of 10 happiest and saddest countries in the world"}
+# Plotting top 10 happiest countries 
+top_10 <- ggplot(df_2021_top10, aes(x = reorder(country_label, score))) + 
+  geom_chicklet(aes(y = 10, fill = 4.9), width = 0.5, radius = grid::unit(5, "pt")) +
+  geom_chicklet(aes(y = score, fill = score), width = 0.5, radius = grid::unit(5, "pt")) +
+  geom_text(aes(y = score), label = round(df_2021_top10$score,2), nudge_y = 0.4, size = 3) + 
+  scale_y_continuous(expand = c(0, 0.1), position = "right", limits = c(0, 10)) +
+  scale_fill_gradient2(low = 'black', high = '#818aeb', mid = 'white', midpoint = 5) + 
+  coord_flip() +
+  labs(y="Best possible life = 10", x = '',
+       title="Top 10 Happiest Countries in 2021",
+       subtitle="9 of the happiest countries present in Europe",
+       caption="Source: The World Happiness Report 2021") + 
+  theme_ipsum(grid = '')  +
+  theme(plot.title = element_text(size=15),
+        plot.subtitle = element_text(size = 12),
+        plot.caption = element_text(size = 10),
+        axis.title.x = element_text(size= 10, color = '#555955'),
+        axis.text.y = element_text(size = 10, color = 'black'),
+        axis.text.x = element_blank(),
+        legend.position = 'None')
+
+# Plotting 10 saddest countries
+bottom_10 <- ggplot(df_2021_bottom10, aes(x = reorder(country_label, score))) + 
+  geom_chicklet(aes(y = 10, fill = 4.9), width = 0.5, radius = grid::unit(5, "pt")) +
+  geom_chicklet(aes(y = score, fill = score), width = 0.5, radius = grid::unit(5, "pt")) +
+  geom_text(aes(y = score), label = round(df_2021_bottom10$score,2), nudge_y = 0.4, size = 3) + 
+  scale_y_continuous(expand = c(0, 0.1), position = "right", limits = c(0, 10)) +
+  scale_fill_gradient2(low = '#074040', high = '#4cc2c2', mid = 'white', midpoint = 5) + 
+  coord_flip() +
+  labs(y="Best possible life = 10", x = '',
+       title="Top 10 Saddest Countries in 2021",
+       subtitle="Mostly struck by poverty",
+       caption="Source: The World Happiness Report 2021") + 
+  theme_ipsum(grid = '') +
+  theme(plot.title = element_text(size=15),
+        plot.subtitle = element_text(size = 12),
+        plot.caption = element_text(size = 10),
+        axis.title.x = element_text(size= 10, color = '#555955'),
+        axis.text.y = element_text(size = 10, color = 'black'),
+        axis.text.x = element_blank(),
+        legend.position = 'None')
+
+# Displaying plots side by side
+top_10 + bottom_10
+```
+
+>Most of the happiest countries comprise in Europe. Most saddest seem to be under financial crisis
+
+***
+
+## Visualization 2 -Happiness trend in 2019, 2020 and 2021 (insights w.r.t. covid19)
+
+### Extracting relevant columns for analysis
+Subsetting `country`, `region`, `ladder_score` for the years 2019 and 2020.
+```{r}
+# Filtering coloums required to evaluate trends in years 2019 and above
+df_2019_2020 <- df_all %>% 
+  filter(year >= 2019) %>%
+  left_join(country_region_dict, by = c('ï..country_name' = 'country')) %>%
+  select(country = ï..country_name, region, year, ladder = life_ladder)  %>%
+  pivot_wider(names_from = 'year', names_prefix = 'year', values_from = 'ladder') %>%
+  filter(!is.na(year2019) & !is.na(year2020)) %>%
+  group_by(region) %>%
+  summarize(happiness_2019 = mean(year2019, na.rm = TRUE),
+            happiness_2020 = mean(year2020, na.rm = TRUE)) %>%
+  mutate(diff = happiness_2020-happiness_2019) %>%
+  arrange(diff) %>%
+  mutate(region = factor(region, levels = region))
+
+```
+### Plotting happiness levels during covid19
+```{r, fig.height = 8, fig.width = 10, fig.align = "center"}
+# Visualizing difference between happiness scores in 2019 and 2020
+plot_2020 <- ggplot() + 
+  geom_dumbbell(data = df_2019_2020 %>% filter(diff >0),
+                aes(y=region, x=happiness_2019, xend=happiness_2020),
+                size=1.5, color="#7FB185", 
+                colour_xend = "#7FB185", colour_x = "#7FB185",
+                size_x = 2.5, size_xend = 5,
+                dot_guide=TRUE, dot_guide_size=0.5) +
+  geom_dumbbell(data = df_2019_2020 %>% filter(diff <0),
+                aes(y=region, x=happiness_2019, xend=happiness_2020),
+                size=1.5, color="#edae52", 
+                colour_xend = "#edae52", colour_x = "#edae52",
+                size_x = 2.5, size_xend = 5,
+                dot_guide=TRUE, dot_guide_size=0.5) +
+  scale_y_discrete(limits = levels(df_2019_2020$region), expand=c(0.075,1)) +
+  labs(x='', y=NULL,
+       title="Happiness in pre to amidst Covid",
+       subtitle = 'Regions see increases in happiness, despite Covid',
+       caption= 'Source: World Happiness Report (2021)') +
+  geom_rect(data=df_2019_2020,
+            aes(xmin=7.35, xmax=7.65, ymin=-Inf, ymax=Inf),
+            fill="#e3e2e1") +
+  geom_text(data=df_2019_2020 %>% filter(region == 'South Asia'),
+            aes(x=happiness_2020, y=region, label= "2020"),
+            color="gray15", size=3, vjust=-1.5) +
+  geom_text(data=df_2019_2020 %>% filter(region == 'South Asia'),
+            aes(x=happiness_2019, y=region, label= "2019"),
+            color="gray15", size=3, vjust=-1.5) +
+  geom_text(data=df_2019_2020 %>% filter(diff>0),
+            aes(x=happiness_2020 , y=region, label=round(happiness_2020,2)),
+            size=4, hjust=-0.5) +
+  geom_text(data=df_2019_2020 %>% filter(diff>0),
+            aes(x=happiness_2019 , y=region, label=round(happiness_2019,2)),
+            color="gray15", size=4, hjust=1.3) +
+  geom_text(data=df_2019_2020 %>% filter(diff<0),
+            aes(x=happiness_2020 , y=region,
+                label=round(happiness_2020,2)),size=4, hjust=1.5) +
+  geom_text(data=df_2019_2020 %>% filter(diff<0),
+            aes(x=happiness_2019 , y=region,
+                label=round(happiness_2019,2)),
+            color="gray15", size=4, hjust=-0.3) +
+  geom_text(data=df_2019_2020 %>%
+              filter(region == 'South Asia'),
+            aes(x=7.5, y=region, label="DIFF"),
+            size=4.5, vjust=-1.5, fontface="bold") +
+  geom_text(data=df_2019_2020, aes(label=round(diff,2),
+                                   y=region, x=7.5), size=3) + 
+  theme_ipsum(grid="") +
+  theme(plot.title = element_text(size=20),
+        plot.subtitle = element_text(size = 15),
+        plot.caption = element_text(size = 12),
+        axis.title.x = element_text(size= 12, color = '#3a403a'),
+        axis.text.y = element_text(size = 15, color = 'black'),
+        axis.text.x = element_blank(),
+        legend.position = 'left')
+
+```
+### Creating new dataframe to compare happiness levels amidst Covid to 2021 level
+Combining dimentions from both datasets to form new dataset with `country`, `region`, `year` and `ladder_score`.
+```{r}
+# Adding year column to 2021 dataset
+df_2021$year <- rep(2021,nrow(df_2021)) 
+
+# Renaming 2021 `ladder_score` as `happiness_2021`
+df_2021_new <- cbind(df_2021)
+names(df_2021_new)[names(df_2021_new) == 'ladder_score'] <- 'happiness_2021'
+
+# Joining 2020 and 2021 dataset
+df_yr_score<-full_join(df_2019_2020, df_2021_new,
+                       by=c("region"="regional_indicator"))
+```
+### Creating new dataframe with `region`, `country` and `ladder_score` columns for year 2019,2020 and 2021
+```{r}
+# Merging country regions with countries 
+df_all_region <- df_all %>% 
+  left_join(country_region_dict, by = c('ï..country_name' = 'country')) %>%
+  select(country = ï..country_name, region, year, ladder = life_ladder) 
+
+# Renaming region, ladder score in data_all dataset
+names(df_all_region)[names(df_all_region) == 'region'] <- 'regional_indicator'
+names(df_all_region)[names(df_all_region) == 'ladder'] <- 'ladder_score'
+
+
+# Subsetting df_2021 dataset
+df_2021_region<- df_2021 %>%
+  select(country = ï..country_name, regional_indicator, year, ladder_score)
+
+# Binding all the regions in `df_final` dataset
+df_final <-rbind(df_all_region,df_2021_region) %>%
+  filter(!is.na(year) & !is.na(regional_indicator)) 
+
+# Making dataset of last 3 years
+df_final_19_20_21 <- df_final %>% 
+  filter(year >= 2019)
+```
+
+### Plotting trends from 2020 to 2021
+```{r, fig.height = 5, fig.width = 10, fig.align = "center"}
+# Filtering regions for ladder score years 2019, 2020 and 2021  
+df_20_21 <- df_final_19_20_21 %>% 
+  filter(year >= 2020) %>%
+  select(country, regional_indicator, year, ladder_score)  %>%
+  pivot_wider(names_from = 'year', names_prefix = 'year', values_from = 'ladder_score') %>%
+  group_by(regional_indicator) %>%
+  summarize(happiness_2020 = mean(year2020, na.rm = TRUE),
+            happiness_2021 = mean(year2021, na.rm = TRUE)) %>%
+  mutate(diff = happiness_2021-happiness_2020) %>%
+  arrange(diff) %>%
+  mutate(regional_indicator = factor(regional_indicator, levels = regional_indicator))
+```
+```{r, fig.height = 5, fig.width = 10, fig.align = "center"}
+# Visualizing difference in happiness score in 2020 to 2021
+plot_2021 <- ggplot() + 
+  geom_dumbbell(data = df_20_21 %>% filter(diff >0),
+                aes(y=regional_indicator, x=happiness_2020, xend=happiness_2021),
+                size=1.5, color="#7FB185", 
+                colour_xend = "#7FB185", colour_x = "#7FB185",
+                size_x = 2.5, size_xend = 5,
+                dot_guide=TRUE, dot_guide_size=0.5) +
+  geom_dumbbell(data = df_20_21 %>% filter(diff <0),
+                aes(y=regional_indicator, x=happiness_2020, xend=happiness_2021),
+                size=1.5, color="#edae52", 
+                colour_xend = "#edae52", colour_x = "#edae52",
+                size_x = 2.5, size_xend = 5,
+                dot_guide=TRUE, dot_guide_size=0.5) +
+  scale_y_discrete(limits = levels(df_2019_2020$regional_indicator), expand=c(0.075,1)) +
+  labs(x='', y=NULL,
+       title="Happiness amdist Covid to 2021",
+       subtitle = 'Most regions see decreases in happiness.',
+       caption= 'Source: World Happiness Report (2021)') +
+  geom_rect(data=df_20_21,
+            aes(xmin=7.35, xmax=7.65, ymin=-Inf, ymax=Inf),
+            fill="#e3e2e1") +
+  geom_text(data=df_20_21 %>% filter(regional_indicator == 'Western Europe'),
+            aes(x=happiness_2021, y=regional_indicator, label= "2021"),
+            color="gray15", size=3, hjust=-1.5) +
+  geom_text(data=df_20_21 %>% filter(regional_indicator == 'Western Europe'),
+            aes(x=happiness_2020, y=regional_indicator, label= "2020"),
+            color="gray15", size=3, hjust=3.0) +
+  geom_text(data=df_20_21 %>% filter(diff>0),
+            aes(x=happiness_2021 , y=regional_indicator, label=round(happiness_2020,2)),
+            size=4, hjust=-0.5) +
+  geom_text(data=df_20_21 %>% filter(diff>0),
+            aes(x=happiness_2021 , y=regional_indicator, label=round(happiness_2020,2)),
+            color="gray15", size=4, hjust=1.3) +
+  geom_text(data=df_20_21 %>% filter(diff<0),
+            aes(x=happiness_2021 , y=regional_indicator,
+                label=round(happiness_2021,2)),size=4, hjust=1.5) +
+  geom_text(data=df_20_21 %>% filter(diff<0),
+            aes(x=happiness_2020 , y=regional_indicator,
+                label=round(happiness_2020,2)),
+            color="gray15", size=4, hjust=-0.3) +
+  geom_text(data=df_20_21 %>%
+              filter(regional_indicator == 'Western Europe'),
+            aes(x=7.5, y=regional_indicator, label="DIFF"),
+            size=4.5, vjust=-1.5, fontface="bold") +
+  geom_text(data=df_20_21, aes(label=round(diff,2),
+                                   y=regional_indicator, x=7.5), size=3) + 
+  theme_ipsum(grid="") +
+  theme(plot.title = element_text(size=20),
+        plot.subtitle = element_text(size = 15),
+        plot.caption = element_text(size = 12),
+        axis.title.x = element_text(size= 12, color = '#3a403a'),
+        axis.text.y = element_text(size = 15, color = 'black'),
+        axis.text.x = element_blank(),
+        legend.position = 'left')
+```
+## Happiness trends Visualizations for last three years {.tabset .tabset-fade .tabset-pills }
+### Dumbell comparison.
+Plotting trends admist covid and 2021 levels.
+```{r, fig.height = 8, fig.width = 20, fig.cap="Figure 5: Trend plots to compare happiness levels in pre, admist covid and 2021"}
+# Displaying comparison plots
+plot_2020 + plot_2021
+```
+### Boxplot comparison 
+Plotting boxplot for enhanced clarity of trends across regions.
+```{r,fig.height=6, fig.cap= "Figure 6: Boxplot analysis of happiness scores"}
+  # Plotting happiness index to compare levels in last three years
+  ggplot(df_final_19_20_21, aes(x=factor(year), y=ladder_score,fill=regional_indicator))+
+    geom_boxplot()+
+    ggtitle("Happiness index across regions for year 2019,2020 and 2021")+
+    facet_grid(.~regional_indicator)+
+    labs(x="Year")+
+    facet_wrap(.~regional_indicator,nrow = 2,strip.position = "right" )+
+    theme(axis.text.x=element_text(angle=-90, vjust=0.4,hjust=1))+
+    theme(legend.position = "none")
+```
+
+>Despite Covid-19, about half of the countries in the world still see an increase in happiness from 2019 to 2020 by small increment. Whereas, majority of countries see a dip in happiness from 2020 to 2021.
+
+
+***
+
+## Visualization 3- Factors correlating to happiness
+Plotting correlation among factors related to happiness in 2021 dataset.
+```{r,corr, fig.height = 3, fig.width = 5, fig.align = "left", fig.cap="Figure 7: Correlation Matrix"}
+# Subsetting numerical colums 
+df_cor <- df_2021 %>% 
+  select(corruption = perceptions_of_corruption,
+         generosity = generosity,
+         freedom = freedom_to_make_life_choices, 
+         life_expectancy = healthy_life_expectancy, 
+         social_support = social_support,
+         GDP_per_capita = logged_GDP_per_capita, 
+         happiness = ladder_score
+  )
+# Displaying heatmap of correlation
+corr <- cor(df_cor)
+plot_ly(colors = "RdBu") %>%
+  add_heatmap(x = rownames(corr), y = colnames(corr), z = corr) %>%
+  colorbar(limits = c(-1, 1))
+```
+```{r}
+# plotly is used to make an interactive plots. If the mouse is hovered over figure, datapoints will be visible.
+```
+
+>Top 3 contributors of happiness from the 2021 dataset are:
+
+>1. Life Expectancy
+>2. Social Support
+>3. GDP per capita 
+
+***
+
+## Visualization 4- General trend of happiness levels over the regions.
+### Plotting overall trend of happiness scores across all regions.
+```{r, fig.height = 5, fig.width = 9, fig.align = "center", fig.cap="Figure 8: Happiness trend plot across regions"}
+# Mapping regions to happiness scores.
+region_level <- ggplot(df_final, aes( x = regional_indicator, y = ladder_score, fill = regional_indicator, text = country)) + geom_beeswarm(aes(color = regional_indicator, alpha=1) )
+
+region_level4 <- region_level   +  geom_boxplot(aes(alpha=2 )) +
+            ggtitle("Country-wise happiness trends in regions")+
+            #theme_classic() + 
+            theme(legend.position = "none", axis.text.x=element_text( angle = 0,hjust=1, size=8)) +  
+            scale_x_discrete(labels = wrap_format(10))+  
+            scale_fill_brewer(palette = "Spectral") + 
+            scale_color_brewer(palette = "Spectral")
+        ggplotly(region_level4, tooltip = c("country","ladder_score"))
+```
+```{r}
+# plotly is used to make an interactive plots. If the mouse is hovered over figure, datapoints will be visible.
+```
+
+>Top happiest regions in the world are Western Europe and North America & ANZ.
+
+
+
+
+***
+
+## Summary
+Happiness across the globe has taken a blow. None of the regions in the world show rise in happiness in 2021 as compared to 2020 (amidst covid).  
+
+Countries having good healthy lifestyle, social support, and high good per capita income have high happiness index. Western Europe and Northern America further confirm the pattern with high happiness scores.
+
+### What I learned?
+Definitely got what the fuss is all about for R. Despite being a python enthusiast I have grown to love R. Learned how R handles reproducibility and version control issues, share my project without the hassle of handling dependencies and new packages like packrat, vizdat, nainar etc. 
+Learned a lot about automation in RMarkdown and publication on RPubs.
+
+### What I would do next?
+There were several variables untouched due to time constraint and scope of the project. Further I would see how the six factors contribute to happiness scores and look at the time series analysis of the most influential factors. Futhermore, make an interactive dashboard to display regression and cluster analysis of important features. 
+
+***
+
+## References
+* World Happiness Report 2021-  <https://worldhappiness.report>
+* Dataset- <https://www.kaggle.com/ajaypalsinghlo/world-happiness-report-2021>
+* Metadata- <https://happiness-report.s3.amazonaws.com/2021/Appendix1WHR2021C2.pdf>

@@ -1,0 +1,38 @@
+---
+title: "self_assessment"
+author: "Farzana Patel"
+date: "24/05/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+## R Markdown
+
+# Marking Criteria
+
+Submits by 12 noon on the 25th of May 2021 by email to ``t.stafford@shef.ac.uk``
+
+Answers the questions in the headings below, showing evidence of engagement with the course
+
+Note: I expect and hope that all students can get full marks for this assessment. There is no word limit, but short is sweet. I suggest you write between 3 sentences and 3 paragraphs for each.
+
+# Final Self-assessment for PSY6422
+
+## 1. Which topic did I find most useful or interesting? Explain why
+I found the data management and version control the most useful. I always had issues with repeated codes for a long time. I was pleasantly surprised to learn the techniques to prevent the heartburn of finding the recent code. I liked how intuitive it was to catch the stacked layered approach followed the code. It was easy to learn and follow the flow of functions. 
+
+## 2. Which topic did I find least useful, interesting or most difficult? Explain why
+I didn’t find any topic difficult to follow honestly. However, I would have found it really useful to see a detailed git merges and cloning of codebooks live to follow the changes. 
+
+## 3. What topics do I want to learn more about in the future? Explain why
+I would like to learn more about animated plots and how to use multiple languages in RStudio. I liked the way animated plots tell a story. 
+I would personally like to learn a little more feature of R that support data science techniques.
+
+## 4. Please share one thing you have read and enjoyed or found useful on the topic of data management and/or visualisation
+I have found the entire module really enjoyable. I found project organization the most useful. I make it a point to put in the initial efforts to follow the steps in order to avoid redoing mending inconsistencies later. 
+ 
+
+
+
